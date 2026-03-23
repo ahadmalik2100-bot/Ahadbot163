@@ -1,0 +1,22 @@
+const TelegramBot = require("node-telegram-bot-api");
+const OpenAI = require("openai");
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+console.log("Bot is running...");
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  if (!msg.text) return;
+  try {
+    await bot.sendChatAction(chatId, "typing");
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful AI assistant on Telegram. Keep responses concise." },
+        { role: "user", content: msg.text }
+      ]
+    });
+    await bot.sendMessage(chatId, res.choices[0].message.content);
+  } catch (err) {
+    await bot.sendMessage(chatId, "Sorry, something went wrong.");
+  }
+});
